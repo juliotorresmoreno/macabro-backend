@@ -1,0 +1,6 @@
+
+host:
+port: 8080
+database:
+    driver: postgres
+    dsn: postgres://teravision:teravision@localhost/teravision
