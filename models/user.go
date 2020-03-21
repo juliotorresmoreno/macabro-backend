@@ -15,7 +15,26 @@ type Group struct {
 // ACL s
 type ACL struct {
 	Owner  string           `json:"owner"`
+	Group  string           `json:"group"`
 	Groups map[string]Group `json:"groups"`
+}
+
+func NewACL(user string) ACL {
+	ACL := ACL{
+		Owner: user,
+		Group: "user",
+		Groups: map[string]Group{
+			"user": Group{
+				Read:  true,
+				Write: false,
+			},
+			"admin": Group{
+				Read:  true,
+				Write: true,
+			},
+		},
+	}
+	return ACL
 }
 
 // User s
@@ -86,14 +105,7 @@ func (that *User) UnmarshalJSON(b []byte) error {
 	that.Name = u.Name
 	that.LastName = u.LastName
 	that.ValidPassword = u.Password
-	that.ACL = ACL{
-		Owner:  u.Username,
-		Groups: map[string]Group{},
-	}
-	that.ACL.Groups["admin"] = Group{
-		Read:  true,
-		Write: true,
-	}
+	that.ACL = NewACL(u.Username)
 	err = that.SetPassword(u.Password)
 	if err != nil {
 		return err

@@ -1,6 +1,6 @@
 
 host:
-port: 8080
+port: 4080
 database:
     driver: postgres
-    dsn: postgres://teravision:teravision@localhost/teravision
+    dsn: postgres://macabro:macabro@localhost/macabro

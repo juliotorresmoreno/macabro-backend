@@ -1,11 +1,12 @@
 package controllers
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
 
+	"github.com/globalsign/mgo/bson"
+	"github.com/go-redis/redis"
 	"github.com/juliotorresmoreno/macabro/db"
 	"github.com/juliotorresmoreno/macabro/models"
 	"github.com/labstack/echo"
@@ -47,11 +48,27 @@ func (el authController) POSTLogin(c echo.Context) error {
 			Message: err.Error(),
 		}
 	}
-	fmt.Println(u.Password, p.Password)
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(u.Password),
 		[]byte(p.Password),
 	)
+
+	token := bson.NewObjectId().Hex()
+	redisCli := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	redisCli.Set(token, u.ID, 24*time.Hour)
+	go redisCli.Close()
+
+	c.SetCookie(&http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   60 * 60 * 10,
+		HttpOnly: true,
+	})
 	if err == nil {
 		return c.JSON(200, u)
 	}

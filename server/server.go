@@ -5,6 +5,7 @@ import (
 
 	"github.com/juliotorresmoreno/macabro/config"
 	"github.com/juliotorresmoreno/macabro/controllers"
+	"github.com/juliotorresmoreno/macabro/middlewares"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -36,10 +37,18 @@ func NewFastServerHTTP() *FastServerHTTP {
 			echo.HeaderContentType,
 			echo.HeaderAccept,
 		},
+		AllowMethods: []string{
+			echo.GET, echo.POST, echo.PATCH,
+			echo.PUT, echo.DELETE, echo.HEAD,
+			echo.OPTIONS,
+		},
 	}))
 
 	api := e.Group("/api")
+	api.Use(middlewares.Session)
 	controllers.UsersController(api.Group("/users"))
 	controllers.AuthController(api.Group("/auth"))
+	controllers.ProfileController(api.Group("/profile"))
+
 	return &FastServerHTTP{e}
 }
