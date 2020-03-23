@@ -22,4 +22,8 @@ func Migrate() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = conn.Sync2(models.PaymentMethods{})
+	if err != nil {
+		log.Fatal(err)
+	}
 }

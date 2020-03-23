@@ -51,3 +51,7 @@ func (e *Engine) NewSession() *Session {
 func (e *Engine) Where(query interface{}, args ...interface{}) *Session {
 	return e.NewSession().Where(query, args...)
 }
+
+func (e *Engine) Table(tableNameOrBean interface{}) *Session {
+	return e.NewSession().Table(tableNameOrBean)
+}

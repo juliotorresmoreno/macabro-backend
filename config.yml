@@ -1,4 +1,5 @@
 
+secret: 1234567890123456
 host:
 port: 4080
 database:

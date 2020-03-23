@@ -30,7 +30,7 @@ func (that usersController) GET(c echo.Context) error {
 	defer conn.Close()
 	_, err = conn.Where("id = ?", c.Param("user_id")).Get(u)
 	if err != nil {
-		return echo.NewHTTPError(501, err.Error())
+		return echo.NewHTTPError(501, helper.ParseError(err).Error())
 	}
 	return c.JSON(200, u)
 }
@@ -38,18 +38,18 @@ func (that usersController) GET(c echo.Context) error {
 func (that usersController) PUT(c echo.Context) error {
 	u := &models.User{}
 	if err := c.Bind(u); err != nil {
-		return echo.NewHTTPError(http.StatusNotAcceptable, err.Error())
+		return echo.NewHTTPError(406, helper.ParseError(err).Error())
 	}
 	conn, err := db.NewEngigne()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, helper.ParseError(err).Error())
+		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
 	defer conn.Close()
 	if err := u.Check(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(500, err.Error())
 	}
 	if _, err := conn.InsertOne(u); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, helper.ParseError(err).Error())
+		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
 	return c.JSON(202, u)
 }
@@ -66,14 +66,11 @@ func (that usersController) PATCH(c echo.Context) error {
 	actualUser := &models.User{}
 	updateUser := &models.User{}
 	if err := c.Bind(updateUser); err != nil {
-		return echo.NewHTTPError(http.StatusNotAcceptable, err.Error())
+		return echo.NewHTTPError(406, err.Error())
 	}
 	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			helper.ParseError(err).Error(),
-		)
+		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
 	defer conn.Close()
 	conn.Get(actualUser)
@@ -96,16 +93,10 @@ func (that usersController) PATCH(c echo.Context) error {
 	actualUser.Linkedin = newValueString(updateUser.Linkedin, actualUser.Linkedin)
 
 	if err := actualUser.Check(); err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			helper.ParseError(err).Error(),
-		)
+		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
 	if _, err := conn.Where("id = ?", actualUser.ID).Update(actualUser); err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			helper.ParseError(err).Error(),
-		)
+		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
 	return c.JSON(http.StatusAccepted, actualUser)
 }

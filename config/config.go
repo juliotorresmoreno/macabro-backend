@@ -9,6 +9,7 @@ import (
 
 // Config s
 type Config struct {
+	Secret   string `json:"secret"`
 	Host     string `json:"host"`
 	Port     string `json:"port"`
 	Database struct {

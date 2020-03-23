@@ -83,6 +83,21 @@ func (e *Session) Find(rowsSlicePtr interface{}, condiBean ...interface{}) error
 	return e.Session.Find(rowsSlicePtr, condiBean...)
 }
 
+func (e Session) Count(bean ...interface{}) (int64, error) {
+	if e.permisionQueryRead != "" {
+		return e.Session.Where(e.getPermisionQueryRead()).Count(bean...)
+	}
+	return e.Session.Count(bean...)
+}
+
+func (e Session) Begin() error {
+	return e.Session.Begin()
+}
+
+func (e Session) Commit() error {
+	return e.Session.Commit()
+}
+
 func (e Session) Select(str string) *Session {
 	e.Session = e.Session.Select(str)
 	return &e
@@ -100,5 +115,10 @@ func (e Session) Or(query interface{}, args ...interface{}) *Session {
 
 func (e Session) And(query interface{}, args ...interface{}) *Session {
 	e.Session = e.Session.And(query, args...)
+	return &e
+}
+
+func (e Session) Table(tableNameOrBean interface{}) *Session {
+	e.Session = e.Session.Table(tableNameOrBean)
 	return &e
 }
