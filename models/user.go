@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"strings"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"golang.org/x/crypto/bcrypt"
@@ -19,10 +21,24 @@ type ACL struct {
 	Groups map[string]Group `json:"groups"`
 }
 
-func NewACL(user string) ACL {
+func (that ACL) IsAdmin() bool {
+	s := strings.Split(that.Group, ",")
+	for _, g := range s {
+		if g == "admin" {
+			return true
+		}
+	}
+	return false
+}
+
+func NewACL(user string, groups ...string) ACL {
+	group := ""
+	if len(groups) > 0 {
+		group = strings.Join(groups, ",")
+	}
 	ACL := ACL{
 		Owner: user,
-		Group: "user",
+		Group: group,
 		Groups: map[string]Group{
 			"user": Group{
 				Read:  true,
@@ -39,15 +55,30 @@ func NewACL(user string) ACL {
 
 // User s
 type User struct {
-	ID            uint   `xorm:"id integer not null autoincr pk"      valid:""`
-	ACL           ACL    `xorm:"acl json not null"                    valid:"required"`
-	Username      string `xorm:"username varchar(20) not null unique" valid:"username,required"`
-	Email         string `xorm:"email varchar(200) not null unique"   valid:"email,required"`
-	Name          string `xorm:"name varchar(50) not null"            valid:"name,required"`
-	LastName      string `xorm:"lastname varchar(50) not null"        valid:"name,required"`
+	ID       int    `xorm:"id integer not null autoincr pk"      valid:""`
+	Username string `xorm:"username varchar(20) not null unique" valid:"username,required"`
+	Email    string `xorm:"email varchar(200) not null unique"   valid:"email,required"`
+	Name     string `xorm:"name varchar(50) not null"            valid:"name,required"`
+	LastName string `xorm:"lastname varchar(50) not null"        valid:"name,required"`
+
+	DocumentType string    `xorm:"document_type varchar(2)"      valid:"in(CC|CE|PA|RC|TI)"`
+	Expedite     time.Time `xorm:"expedite date"`
+	Document     string    `xorm:"document varchar(20)"          valid:"int"`
+	DateBirth    time.Time `xorm:"date_birth date"`
+	ImgSrc       string    `xorm:"imgSrc text"`
+	Country      string    `xorm:"country varchar(2)"`
+	Nationality  string    `xorm:"nationality varchar(2)"`
+	Facebook     string    `xorm:"facebook varchar(255)"`
+	Linkedin     string    `xorm:"linkedin varchar(255)"`
+
 	Password      string `xorm:"password varchar(100) not null"`
-	ValidPassword string `xorm:"-"                                    valid:"password"`
+	ValidPassword string `xorm:"-"                              valid:"password"`
 	RecoveryToken string `xorm:"recovery_token varchar(100) not null"`
+
+	ACL       ACL       `xorm:"acl json not null"                    valid:"required"`
+	CreatedAt time.Time `xorm:"created_at created"`
+	UpdatedAt time.Time `xorm:"updated_at updated"`
+	Version   int       `xorm:"version version"`
 }
 
 // TableName s
@@ -56,21 +87,42 @@ func (that User) TableName() string {
 }
 
 type user struct {
-	ID       uint   `json:"id"`
+	ID       int    `json:"id"`
 	ACL      ACL    `json:"acl"`
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
 	LastName string `json:"lastname"`
+
+	DocumentType string    `json:"document_type"`
+	Expedite     time.Time `json:"expedite"`
+	Document     string    `json:"document"`
+	DateBirth    time.Time `json:"date_birth"`
+	ImgSrc       string    `json:"imgSrc"`
+	Country      string    `json:"country"`
+	Nationality  string    `json:"nationality"`
+	Facebook     string    `json:"facebook"`
+	Linkedin     string    `json:"linkedin"`
+
 	Password string `json:"password"`
 }
 
 type userWithowPassword struct {
-	ID       uint   `json:"id"`
+	ID       int    `json:"id"`
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
 	LastName string `json:"lastname"`
+
+	DocumentType string    `json:"document_type"`
+	Expedite     time.Time `json:"expedite"`
+	Document     string    `json:"document"`
+	DateBirth    time.Time `json:"date_birth"`
+	ImgSrc       string    `json:"imgSrc"`
+	Country      string    `json:"country"`
+	Nationality  string    `json:"nationality"`
+	Facebook     string    `json:"facebook"`
+	Linkedin     string    `json:"linkedin"`
 }
 
 // Check s
@@ -105,7 +157,18 @@ func (that *User) UnmarshalJSON(b []byte) error {
 	that.Name = u.Name
 	that.LastName = u.LastName
 	that.ValidPassword = u.Password
-	that.ACL = NewACL(u.Username)
+
+	that.DocumentType = u.DocumentType
+	that.Expedite = u.Expedite
+	that.Document = u.Document
+	that.DateBirth = u.DateBirth
+	that.ImgSrc = u.ImgSrc
+	that.Country = u.Country
+	that.Nationality = u.Nationality
+	that.Facebook = u.Facebook
+	that.Linkedin = u.Linkedin
+
+	that.ACL = NewACL(u.Username, "user")
 	err = that.SetPassword(u.Password)
 	if err != nil {
 		return err
@@ -121,6 +184,16 @@ func (that User) MarshalJSON() ([]byte, error) {
 		Username: that.Username,
 		Name:     that.Name,
 		LastName: that.LastName,
+
+		DocumentType: that.DocumentType,
+		Expedite:     that.Expedite,
+		Document:     that.Document,
+		DateBirth:    that.DateBirth,
+		ImgSrc:       that.ImgSrc,
+		Country:      that.Country,
+		Nationality:  that.Nationality,
+		Facebook:     that.Facebook,
+		Linkedin:     that.Linkedin,
 	}
 	return json.Marshal(u)
 }

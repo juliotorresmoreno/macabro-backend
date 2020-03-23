@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/juliotorresmoreno/macabro/db"
@@ -26,11 +27,13 @@ func Session(handler echo.HandlerFunc) echo.HandlerFunc {
 			conn, err := db.NewEngigne()
 			if err == nil {
 				id, _ := strconv.Atoi(r)
-				u := &models.User{ID: uint(id)}
-				if ok, _ := conn.Get(u); ok {
+				u := &models.User{ID: id}
+				ok, _ := conn.Select("id, username, name, lastname, acl").Get(u)
+				if ok {
 					u.Password = ""
 					u.ValidPassword = ""
 					c.Set("session", u)
+					redisCli.Set(token.Value, r, 24*time.Hour)
 				}
 			}
 			go conn.Close()

@@ -48,7 +48,7 @@ func NewFastServerHTTP() *FastServerHTTP {
 	api.Use(middlewares.Session)
 	controllers.UsersController(api.Group("/users"))
 	controllers.AuthController(api.Group("/auth"))
-	controllers.ProfileController(api.Group("/profile"))
+	controllers.BusinessController(api.Group("/business"))
 
 	return &FastServerHTTP{e}
 }
