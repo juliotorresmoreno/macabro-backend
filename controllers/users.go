@@ -28,7 +28,7 @@ func (that usersController) GET(c echo.Context) error {
 		return err
 	}
 	defer conn.Close()
-	_, err = conn.Where("id = ?", c.Param("id")).Get(u)
+	_, err = conn.Where("id = ?", c.Param("user_id")).Get(u)
 	if err != nil {
 		return echo.NewHTTPError(501, err.Error())
 	}
@@ -113,7 +113,7 @@ func (that usersController) PATCH(c echo.Context) error {
 // UsersController s
 func UsersController(g *echo.Group) {
 	u := usersController{}
-	g.GET("/:id", u.GET)
+	g.GET("/:user_id", u.GET)
 	g.PUT("", u.PUT)
-	g.PATCH("/:id", u.PATCH)
+	g.PATCH("/:user_id", u.PATCH)
 }
