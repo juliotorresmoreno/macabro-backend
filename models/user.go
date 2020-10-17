@@ -62,9 +62,9 @@ type User struct {
 	LastName string `xorm:"lastname varchar(50) not null"        valid:"name,required"`
 
 	DocumentType string    `xorm:"document_type varchar(2)"      valid:"in(CC|CE|PA|RC|TI)"`
-	Expedite     time.Time `xorm:"expedite date"`
+	Expedite     time.Time `xorm:"expedite DATE"`
 	Document     string    `xorm:"document varchar(20)"          valid:"int"`
-	DateBirth    time.Time `xorm:"date_birth date"`
+	DateBirth    time.Time `xorm:"date_birth DATE"`
 	ImgSrc       string    `xorm:"imgSrc text"`
 	Country      string    `xorm:"country varchar(2)"`
 	Nationality  string    `xorm:"nationality varchar(2)"`

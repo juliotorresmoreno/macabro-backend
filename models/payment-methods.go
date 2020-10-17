@@ -9,13 +9,13 @@ import (
 )
 
 type PaymentMethods struct {
-	ID     int `xorm:"id integer not null autoincr pk"                    valid:""`
-	UserID int `xorm:"user_id integer not null index"                     valid:""`
+	ID int `xorm:"id integer not null autoincr pk"                        valid:""`
 
+	User            *User  `xorm:"user_id integer not null index"         valid:""`
 	Name            string `xorm:"name varchar(100) not null"             valid:""`
 	AliasNumber     string `xorm:"alias_number varchar(100) not null"     valid:""`
 	Type            string `xorm:"type varchar(100) not null"             valid:""`
-	Default         int    `xorm:"'default' integer not null"               valid:""`
+	Default         int    `xorm:"'default' integer not null"             valid:""`
 	Number          string `xorm:"number varchar(100) not null"           valid:""`
 	ExpirationMonth string `xorm:"expiration_month varchar(100) not null" valid:""`
 	ExpirationYear  string `xorm:"expiration_year varchar(100) not null"  valid:""`
@@ -33,7 +33,7 @@ func (that PaymentMethods) TableName() string {
 
 type paymentMethods struct {
 	ID              int    `json:"id"`
-	UserID          int    `json:"user_id"`
+	User            int    `json:"user_id"`
 	Name            string `json:"name"`
 	AliasNumber     string `json:"alias_number"`
 	Type            string `json:"type"`
@@ -47,7 +47,7 @@ type paymentMethods struct {
 func (that PaymentMethods) MarshalJSON() ([]byte, error) {
 	u := &paymentMethods{
 		ID:          that.ID,
-		UserID:      that.UserID,
+		User:        that.User.ID,
 		Name:        that.Name,
 		AliasNumber: that.AliasNumber,
 		Type:        that.Type,
@@ -63,7 +63,8 @@ func (that *PaymentMethods) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	that.ID = u.ID
-	that.UserID = u.UserID
+	that.User = &User{}
+	that.User.ID = u.User
 	that.Name = u.Name
 
 	lastFour := ""

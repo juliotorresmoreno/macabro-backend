@@ -98,7 +98,7 @@ func (that usersController) PATCH(c echo.Context) error {
 	if _, err := conn.Where("id = ?", actualUser.ID).Update(actualUser); err != nil {
 		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
-	return c.JSON(http.StatusAccepted, actualUser)
+	return c.String(http.StatusNoContent, "")
 }
 
 // UsersController s

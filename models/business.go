@@ -5,23 +5,24 @@ import (
 	"time"
 )
 
+// Business .
 type Business struct {
-	ID                  int    `xorm:"id integer not null autoincr pk <-" json:"id"`
-	UserID              int    `xorm:"user_id integer not null unique"    json:"user_id"`
-	Name                string `xorm:"name varchar(255)"                  json:"name"`
-	Nit                 string `xorm:"nit varchar(20)"                    json:"nit"`
-	LegalRepresentative string `xorm:"legal_representative varchar(255)"  json:"legal_representative"`
-	Website             string `xorm:"website text"                       json:"website"`
-	Address             string `xorm:"address varchar(255)"               json:"address"`
-	Country             string `xorm:"country varchar(2)"                 json:"country"`
-	City                string `xorm:"city varchar(100)"                  json:"city"`
-	EconomicActivity    string `xorm:"economic_activity varchar(500)"     json:"economic_activity"`
-	ImgSrc              string `xorm:"imgSrc text"                        json:"imgSrc"`
+	ID                  int    `xorm:"id integer not null autoincr pk <-"    json:"id"`
+	User                *User  `xorm:"user_id integer not null unique"       json:"-"`
+	Name                string `xorm:"name varchar(255)"                     json:"name"`
+	Nit                 string `xorm:"nit varchar(20)"                       json:"nit"`
+	LegalRepresentative string `xorm:"legal_representative varchar(255)"     json:"legal_representative"`
+	Website             string `xorm:"website text"                          json:"website"`
+	Address             string `xorm:"address varchar(255)"                  json:"address"`
+	Country             string `xorm:"country varchar(2)"                    json:"country"`
+	City                string `xorm:"city varchar(100)"                     json:"city"`
+	EconomicActivity    string `xorm:"economic_activity varchar(500)"        json:"economic_activity"`
+	ImgSrc              string `xorm:"imgSrc text"                           json:"imgSrc"`
 
-	ACL       ACL       `xorm:"acl json not null"  json:"-" valid:"required"`
-	CreatedAt time.Time `xorm:"created_at created" json:"-"`
-	UpdatedAt time.Time `xorm:"updated_at updated" json:"-"`
-	Version   int       `xorm:"version version"    json:"-"`
+	ACL       ACL       `xorm:"acl json not null"                            json:"-" valid:"required" `
+	CreatedAt time.Time `xorm:"created_at created"                           json:"-"                  `
+	UpdatedAt time.Time `xorm:"updated_at updated"                           json:"-"                  `
+	Version   int       `xorm:"version version"                              json:"-"                  `
 }
 
 type business struct {
@@ -54,7 +55,8 @@ func (that *Business) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	that.ID = u.ID
-	that.UserID = u.UserID
+	that.User = &User{}
+	that.User.ID = u.UserID
 	that.Name = u.Name
 	that.Nit = u.Nit
 	that.LegalRepresentative = u.LegalRepresentative

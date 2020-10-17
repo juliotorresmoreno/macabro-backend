@@ -54,18 +54,18 @@ func (that paymentMethodsController) PUT(c echo.Context) error {
 	}
 	defer conn.Close()
 
-	p := &models.PaymentMethods{}
+	p := &models.PaymentMethods{User: &models.User{}}
 	if err := c.Bind(p); err != nil {
 		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
-	if p.UserID == 0 {
-		p.UserID = session.ID
+	if p.User.ID == 0 {
+		p.User = session
 	}
-	if !session.ACL.IsAdmin() && session.ID != p.UserID {
+	if !session.ACL.IsAdmin() && session.ID != p.User.ID {
 		return echo.NewHTTPError(401, "Unauthorized")
 	}
 
-	s, _ := conn.Where("user_id = ?", p.UserID).Table(p.TableName()).Count()
+	s, _ := conn.Where("user_id = ?", p.User.ID).Table(p.TableName()).Count()
 	if s == 0 {
 		p.Default = 1
 	}
@@ -92,7 +92,7 @@ func (that paymentMethodsController) PATCH(c echo.Context) error {
 	}
 	defer conn.Close()
 
-	p := &models.PaymentMethods{}
+	p := &models.PaymentMethods{User: &models.User{}}
 	if err := c.Bind(p); err != nil {
 		return echo.NewHTTPError(500, helper.ParseError(err).Error())
 	}
@@ -140,9 +140,9 @@ func (that paymentMethodsController) DELETE(c echo.Context) error {
 	defer conn.Close()
 	id := c.ParamValues()[0]
 
-	p := &models.PaymentMethods{}
+	p := &models.PaymentMethods{User: &models.User{}}
 	conn.Where("id = ?", id).Get(p)
-	if !session.ACL.IsAdmin() && session.ID != p.UserID {
+	if !session.ACL.IsAdmin() && session.ID != p.User.ID {
 		return echo.NewHTTPError(401, "Unauthorized")
 	}
 

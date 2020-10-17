@@ -23,7 +23,7 @@ func (that businessController) GET(c echo.Context) error {
 		return echo.NewHTTPError(401, "Unauthorized")
 	}
 
-	conn, err := db.NewEngigne() // WithSession(session.Username, session.ACL.Group)
+	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, helper.ParseError(err))
 	}
@@ -48,8 +48,8 @@ func (that businessController) PATCH(c echo.Context) error {
 		return echo.NewHTTPError(401, "Unauthorized")
 	}
 
-	actualBusiness := &models.Business{}
-	updateBusiness := &models.Business{}
+	actualBusiness := &models.Business{User: &models.User{}}
+	updateBusiness := &models.Business{User: &models.User{}}
 	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, helper.ParseError(err))
@@ -59,8 +59,13 @@ func (that businessController) PATCH(c echo.Context) error {
 	if err := c.Bind(updateBusiness); err != nil {
 		return echo.NewHTTPError(http.StatusNotAcceptable, helper.ParseError(err).Error())
 	}
+	if actualBusiness.User.ID == 0 {
+		actualBusiness.User = session
+	}
+	if !session.ACL.IsAdmin() && session.ID != actualBusiness.User.ID {
+		return echo.NewHTTPError(401, "Unauthorized")
+	}
 
-	actualBusiness.UserID, _ = strconv.Atoi(c.Param("user_id"))
 	actualBusiness.Name = updateBusiness.Name
 	actualBusiness.Nit = updateBusiness.Nit
 	actualBusiness.LegalRepresentative = updateBusiness.LegalRepresentative
@@ -84,7 +89,7 @@ func (that businessController) PATCH(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotAcceptable, helper.ParseError(err).Error())
 	}
 
-	return c.JSON(202, actualBusiness)
+	return c.String(http.StatusNoContent, "")
 }
 
 func BusinessController(g *echo.Group) {
