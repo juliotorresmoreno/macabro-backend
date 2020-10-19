@@ -26,4 +26,8 @@ func Migrate() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = conn.Sync2(models.Instance{})
+	if err != nil {
+		log.Fatal(err)
+	}
 }

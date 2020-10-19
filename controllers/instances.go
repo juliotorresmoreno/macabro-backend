@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"github.com/juliotorresmoreno/macabro/db"
 	"github.com/juliotorresmoreno/macabro/helper"
 	"github.com/juliotorresmoreno/macabro/models"
@@ -11,32 +13,30 @@ type instancesController struct {
 }
 
 func (el *instancesController) GETALL(c echo.Context) error {
-	_session := c.Get("session")
-	if _session == nil {
-		return echo.NewHTTPError(401, "Unauthorized")
+	session, err := validateSession(c)
+	if err != nil {
+		return err
 	}
-	session := _session.(*models.User)
 
-	u := make([]models.Instance, 0)
+	instances := make([]*models.InstanceWithDate, 0)
 	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
 	if err != nil {
 		return echo.NewHTTPError(500, helper.ParseError(err))
 	}
 	defer conn.Close()
 
-	if err = conn.Find(&u); err != nil {
+	if err = conn.Find(&instances); err != nil {
 		return echo.NewHTTPError(500, helper.ParseError(err))
 	}
 
-	return c.JSON(200, u)
+	return c.JSON(200, instances)
 }
 
 func (el *instancesController) GET(c echo.Context) error {
-	_session := c.Get("session")
-	if _session == nil {
-		return echo.NewHTTPError(401, "Unauthorized")
+	session, err := validateSession(c)
+	if err != nil {
+		return err
 	}
-	session := _session.(*models.User)
 
 	u := new(models.Instance)
 	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
@@ -55,42 +55,56 @@ func (el *instancesController) GET(c echo.Context) error {
 }
 
 func (el *instancesController) POST(c echo.Context) error {
-	_session := c.Get("session")
-	if _session == nil {
-		return echo.NewHTTPError(401, "Unauthorized")
+	session, err := validateSession(c)
+	if err != nil {
+		return err
 	}
-	session := _session.(*models.User)
 
-	u := new(models.Instance)
+	instanceUpdate := new(models.Instance)
+	instanceActual := new(models.Instance)
 	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
 	if err != nil {
 		return echo.NewHTTPError(500, helper.ParseError(err))
 	}
 	defer conn.Close()
-
-	if err = c.Bind(u); err != nil {
-		return echo.NewHTTPError(406, helper.ParseError(err))
-	}
-	u.User = session
-
-	if err = u.Check(); err != nil {
-		return echo.NewHTTPError(406, helper.ParseError(err))
-	}
-	id := c.Param("id")
-	_, err = conn.Where("id = ?", id).Update(u)
+	id, _ := strconv.Atoi(c.Param("id"))
+	instanceActual.ID = id
+	_, err = conn.Get(instanceActual)
 	if err != nil {
 		return echo.NewHTTPError(500, helper.ParseError(err))
 	}
 
-	return c.JSON(200, u)
+	if err = c.Bind(instanceUpdate); err != nil {
+		return echo.NewHTTPError(406, helper.ParseError(err))
+	}
+	instanceActual.User = session
+	instanceActual.IsCloud = instanceUpdate.IsCloud
+	instanceActual.Name = instanceUpdate.Name
+	instanceActual.Type = instanceUpdate.Type
+	instanceActual.Replicas = instanceUpdate.Replicas
+	instanceActual.AutoScaling = instanceUpdate.AutoScaling
+	instanceActual.AllowDeletion = instanceUpdate.AllowDeletion
+	instanceActual.BackupPeriodicity = instanceUpdate.BackupPeriodicity
+	instanceActual.URL = instanceUpdate.URL
+	instanceActual.Username = instanceUpdate.Username
+	instanceActual.Password = instanceUpdate.Password
+
+	if err = instanceActual.Check(); err != nil {
+		return echo.NewHTTPError(406, helper.ParseError(err))
+	}
+	_, err = conn.Where("id = ?", id).Update(instanceActual)
+	if err != nil {
+		return echo.NewHTTPError(500, helper.ParseError(err))
+	}
+
+	return c.String(204, "")
 }
 
 func (el *instancesController) PUT(c echo.Context) error {
-	_session := c.Get("session")
-	if _session == nil {
-		return echo.NewHTTPError(401, "Unauthorized")
+	session, err := validateSession(c)
+	if err != nil {
+		return err
 	}
-	session := _session.(*models.User)
 
 	u := new(models.Instance)
 	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
@@ -112,15 +126,14 @@ func (el *instancesController) PUT(c echo.Context) error {
 		return echo.NewHTTPError(500, helper.ParseError(err))
 	}
 
-	return c.JSON(200, u)
+	return c.String(204, "")
 }
 
 func (el *instancesController) DELETE(c echo.Context) error {
-	_session := c.Get("session")
-	if _session == nil {
-		return echo.NewHTTPError(401, "Unauthorized")
+	session, err := validateSession(c)
+	if err != nil {
+		return err
 	}
-	session := _session.(*models.User)
 
 	u := new(models.Instance)
 	conn, err := db.NewEngigneWithSession(session.Username, session.ACL.Group)
@@ -135,7 +148,7 @@ func (el *instancesController) DELETE(c echo.Context) error {
 		return echo.NewHTTPError(500, helper.ParseError(err))
 	}
 
-	return c.JSON(200, u)
+	return c.String(204, "")
 }
 
 func InstancesController(g *echo.Group) {

@@ -1,6 +1,8 @@
 package db
 
 import (
+	"errors"
+
 	"github.com/go-xorm/xorm"
 	"github.com/juliotorresmoreno/macabro/config"
 	"github.com/lib/pq"
@@ -9,24 +11,28 @@ import (
 // NewEngigne s
 func NewEngigne() (*xorm.Engine, error) {
 	conf := config.GetConfig()
-	dsn := conf.Database.DSN
 	if conf.Database.Driver == "postgres" {
-		dsn, _ = pq.ParseURL(conf.Database.DSN)
+		dsn, err := pq.ParseURL(conf.Database.DSN)
+		if err != nil {
+			return &xorm.Engine{}, err
+		}
+		conn, err := xorm.NewEngine(conf.Database.Driver, dsn)
+		conn.ShowSQL(true)
+		return conn, err
 	}
-	conn, err := xorm.NewEngine(conf.Database.Driver, dsn)
-	return conn, err
+	return &xorm.Engine{}, errors.New("No implementado")
 }
 
 // NewEngigneWithSession s
 func NewEngigneWithSession(user, group string) (*Engine, error) {
 	conn, err := NewEngigne()
 
-	r := "(acl->>'owner' = '%v' or (acl->'groups'->'%v'->>'read')::boolean is true)"
-	w := "(acl->>'owner' = '%v' or (acl->'groups'->'%v'->>'write')::boolean is true)"
+	pQueryRead := "(acl->>'owner' = '%v' or (acl->'groups'->'%v'->>'read')::boolean is true)"
+	pQueryWrite := "(acl->>'owner' = '%v' or (acl->'groups'->'%v'->>'write')::boolean is true)"
 
 	engine := &Engine{Engine: conn}
-	engine.permisionQueryRead = r
-	engine.permisionQueryWrite = w
+	engine.permisionQueryRead = pQueryRead
+	engine.permisionQueryWrite = pQueryWrite
 	engine.user = user
 	engine.group = group
 	engine.ShowSQL(true)
